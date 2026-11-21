@@ -61,6 +61,83 @@ OpenCode reloads config changes automatically; no restart is needed.
 > Configured values are merged *after* plugin transforms and would overwrite the
 > computed context. Supply each model's real window through `baseContexts`.
 
+## Real-world example: Inkling-2-Mini on a local llama.cpp router
+
+This mirrors how the model is configured for the Pi agent
+(`contextWindow: 24576`, `maxTokens: 4096`, `reserveTokens: 4096`,
+`keepRecentTokens: 8192`). The effective context becomes `24094`, so with a
+global buffer of `15%` compaction starts at `~20480` tokens used — leaving
+`4096` tokens free out of the real `24576` window.
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "model": "llamacpp/Inkling-2-Mini-UD-Q4_K_M",
+
+  "compaction": {
+    "auto": true,
+    "buffer": "15%",
+    "keep": { "tokens": 8192 }
+  },
+
+  "plugins": [
+    {
+      "package": "/absolute/path/to/opencode-compaction-presets",
+      "options": {
+        "bufferPercent": 15,
+        "presets": {
+          "default": { "reserve": 4096, "note": "matches Pi's Inkling override" },
+          "lean":    { "reserve": 8192, "note": "compact earlier, more headroom" },
+          "deep":    { "reserve": 12288, "note": "very early compaction" },
+          "roomy":   { "reserve": 2048, "note": "compact later, more context" }
+        },
+        "baseContexts": {
+          "llamacpp/Inkling-2-Mini-UD-Q4_K_M": 24576
+        },
+        "assignments": {
+          "llamacpp/Inkling-2-Mini-UD-Q4_K_M": "default"
+        }
+      }
+    }
+  ],
+
+  "providers": {
+    "llamacpp": {
+      "name": "llama.cpp (local router)",
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "http://127.0.0.1:8080/v1",
+        "apiKey": "no-key"
+      },
+      "compatibility": {
+        "maxTokensField": "max_tokens"
+      },
+      "models": {
+        "Inkling-2-Mini-UD-Q4_K_M": {
+          "modelID": "Inkling-2-Mini-UD-Q4_K_M",
+          "name": "Inkling 2 Mini UD Q4_K_M",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"],
+            "reasoning": { "supported": true }
+          },
+          "limit": { "output": 4096 },
+          // Force the GGUF template to a short reasoning trace.
+          "body": { "reasoning_effort": "minimal" },
+          "cost": { "input": 0, "output": 0 }
+        }
+      }
+    }
+  }
+}
+```
+
+The router itself is launched with the patched Vulkan build at `CTX=24576`,
+`BATCH=256`, `UBATCH=256` and KV cache `q4_0` — the model's 16.6 GiB weights
+plus KV must fit the GPU's shared UMA heap.
+
 ## Options
 
 | Option | Type | Default | Description |
