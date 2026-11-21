@@ -1,0 +1,28 @@
+{
+  "name": "opencode-compaction-presets",
+  "version": "0.1.0",
+  "description": "Per-model compaction presets for OpenCode V2, similar to Pi agent's modelOverrides",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.ts"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "compaction",
+    "context",
+    "llm"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  }
+}

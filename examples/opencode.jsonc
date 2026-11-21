@@ -1,0 +1,45 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Global fallbacks. Keep `bufferPercent` below in sync with this value.
+  "compaction": {
+    "auto": true,
+    "buffer": "15%",
+    "keep": { "tokens": 8192 }
+  },
+
+  "plugins": [
+    {
+      "package": "/absolute/path/to/opencode-compaction-presets",
+      "options": {
+        "bufferPercent": 15,
+        "presets": {
+          "standard": { "reserve": 4000, "note": "balanced" },
+          "lean": { "reserve": 8000, "note": "compact earlier" },
+          "deep": { "reserve": 12000, "note": "compact very early" }
+        },
+        "baseContexts": {
+          "local/coder": 32768
+        },
+        "assignments": {
+          "local/coder": "standard"
+        }
+      }
+    }
+  ],
+
+  "providers": {
+    "local": {
+      "name": "Local server",
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": { "baseURL": "http://127.0.0.1:1234/v1" },
+      "models": {
+        "coder": {
+          "name": "Example model",
+          // Deliberately no `limit.context` here: baseContexts above supplies it.
+          "limit": { "output": 4096 }
+        }
+      }
+    }
+  }
+}
